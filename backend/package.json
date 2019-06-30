@@ -1,0 +1,20 @@
+{
+  "name": "restful-api-section",
+  "version": "1.0.0",
+  "description": "Section of NodeJS course.",
+  "main": "app.js",
+  "author": "Iglan Cardeal",
+  "scripts": {
+    "start": "nodemon --exec babel-node app.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "nodemon": "^1.19.1"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.7.0"
+  }
+}
