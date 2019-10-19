@@ -1,23 +1,16 @@
 import { validationResult } from "express-validator";
+import path from "path";
+import fs from "fs";
 import PostsModel from "../models/posts";
 
 export default {
-  getPosts: (req, res, next) => {
-    res.status(200).json({
-      posts: [
-        {
-          _id: 1,
-          title: "First Post",
-          creator: {
-            name: "Me Myself"
-          },
-          content: "Content of the first Post.",
-          imageUrl:
-            "https://media.gazetadopovo.com.br/2016/12/a12fe5a3a1615c8e6ed52d5f7291ed80-gpMedium.jpg",
-          createdAt: new Date().toISOString()
-        }
-      ]
-    });
+  getPosts: async (req, res, next) => {
+    try {
+      const posts = await PostsModel.find();
+      res.status(200).json({ message: "Fetched posts.", posts });
+    } catch (error) {
+      next(error);
+    }
   },
 
   createPost: async (req, res, next) => {
@@ -26,18 +19,20 @@ export default {
       const error = new Error("Validation failed!");
       error.statusCode = 422;
       throw error;
-      // return res
-      //   .status(422)
-      //   .json({ message: "Validation failed!", errors: erros.array() });
+    }
+    if (!req.file) {
+      const error = new Error("No image provided!");
+      error.statusCode = 422;
+      throw error;
     }
     try {
       const { title, content } = req.body;
+      const imageUrl = req.file.path;
       // cria novo post.
       const newPost = new PostsModel({
         title,
         content,
-        imageUrl:
-          "https://media.gazetadopovo.com.br/2016/12/a12fe5a3a1615c8e6ed52d5f7291ed80-gpMedium.jpg",
+        imageUrl: imageUrl,
         creator: {
           name: "Me Myself"
         }
@@ -47,21 +42,72 @@ export default {
         message: "Post created successfully!",
         post: newPost
       });
-      // res.status(201).json({
-      //   message: "Post create successfully!.",
-      //   post: {
-      //     _id: new Date().toDateString(),
-      //     title,
-      //     content,
-      //     creator: {
-      //       name: "Cardeal"
-      //     },
-      //     createdAt: new Date()
-      //   }
-      // });
     } catch (error) {
-      if (!error.statusCode) error.statusCode = 500;
+      next(error);
+    }
+  },
+
+  editPost: async (req, res, next) => {
+    const erros = validationResult(req);
+    if (!erros.isEmpty()) {
+      const error = new Error("Validation failed!");
+      error.statusCode = 422;
+      throw error;
+    }
+    const postId = req.params.postId;
+    const { title, content } = req.body;
+    let imageUrl = req.body.image;
+    if (req.file) {
+      imageUrl = req.file.path;
+    }
+    if (!imageUrl) {
+      const error = new Error("No file picked!");
+      error.statusCode = 422;
+      throw error;
+    }
+    try {
+      const postFinded = await PostsModel.findById(postId);
+      if (!postFinded) {
+        const error = new Error("Post not found!");
+        error.statusCode = 404;
+        throw error;
+      }
+      if (imageUrl !== postFinded.imageUrl) {
+        clearImageFileFromSystem(postFinded.imageUrl); // remove imagem antiga que nao sera mais usada.
+      }
+      postFinded.title = title;
+      postFinded.content = content;
+      postFinded.imageUrl = imageUrl;
+      await postFinded.save();
+      return res
+        .status(200)
+        .json({ message: "Post update success!", post: postFinded });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getPost: async (req, res, next) => {
+    const postId = req.params.postId;
+    try {
+      const postFinded = await PostsModel.findById(postId);
+      if (!postFinded) {
+        const error = new Error("Post not found!");
+        error.statusCode = 404;
+        throw error;
+      }
+      res.status(200).json({ message: "Post fetched!", post: postFinded });
+    } catch (error) {
       next(error);
     }
   }
+};
+
+// ===================== utils =====================
+
+const clearImageFileFromSystem = imagePath => {
+  // deleta arquivos de imagens antigos quando estes forem atualizados.
+  fs.unlink(path.join(__dirname, "..", imagePath), error => {
+    if (error) console.log(error);
+  });
 };
