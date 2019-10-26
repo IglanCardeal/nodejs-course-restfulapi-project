@@ -121,7 +121,7 @@ const clearImageFileFromSystem = imagePath => {
 };
 
 const caseOfPostNotFound = (message, statusCode) => {
-  let error = {};
+  let error;
   if (typeof message !== "string" || typeof statusCode !== "number") {
     error = new Error(
       'Type of message or type of status code is invalid! Check "caseOfPostNotFound" function on feed.js controller.'
