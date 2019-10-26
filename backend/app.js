@@ -26,7 +26,7 @@ const fileFilter = (req, file, callback) => {
       file.mimetype === "image/jpeg" ||
       file.mimetype === "image/jpg"
   );
-  if (validImageFileFormat) {  
+  if (validImageFileFormat) {
     callback(null, true);
   } else {
     callback(null, false);
@@ -67,7 +67,7 @@ const mongoPort = 27017;
 const database = "my-api";
 const mongoUrl = `mongodb://localhost:${mongoPort}/${database}`;
 
-mongoose.connect(mongoUrl, { useNewUrlParser: true }, error => {
+mongoose.connect(mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true }, error => {
   if (error) {
     console.log(error);
     process.exit(1);

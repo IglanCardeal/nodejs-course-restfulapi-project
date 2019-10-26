@@ -18,5 +18,6 @@ router.get("/posts", feedController.getPosts);
 router.get("/post/:postId", feedController.getPost);
 router.post("/post", postPostValidator(), feedController.createPost);
 router.put("/post/:postId", postPostValidator(), feedController.editPost);
+router.delete("/post/:postId", feedController.deletePost);
 
 export default router;

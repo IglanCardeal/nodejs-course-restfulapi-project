@@ -4,6 +4,17 @@ import fs from "fs";
 import PostsModel from "../models/posts";
 
 export default {
+  getPost: async (req, res, next) => {
+    const postId = req.params.postId;
+    try {
+      const postFinded = await PostsModel.findById(postId);
+      if (!postFinded) caseOfPostNotFound("Post not found!", 404);
+      res.status(200).json({ message: "Post fetched!", post: postFinded });
+    } catch (error) {
+      next(error);
+    }
+  },
+
   getPosts: async (req, res, next) => {
     try {
       const posts = await PostsModel.find();
@@ -67,11 +78,8 @@ export default {
     }
     try {
       const postFinded = await PostsModel.findById(postId);
-      if (!postFinded) {
-        const error = new Error("Post not found!");
-        error.statusCode = 404;
-        throw error;
-      }
+      if (!postFinded)
+        caseOfPostNotFound("Post not found! Unable to edit post.", 404);
       if (imageUrl !== postFinded.imageUrl) {
         clearImageFileFromSystem(postFinded.imageUrl); // remove imagem antiga que nao sera mais usada.
       }
@@ -87,16 +95,16 @@ export default {
     }
   },
 
-  getPost: async (req, res, next) => {
+  deletePost: async (req, res, next) => {
     const postId = req.params.postId;
     try {
       const postFinded = await PostsModel.findById(postId);
-      if (!postFinded) {
-        const error = new Error("Post not found!");
-        error.statusCode = 404;
-        throw error;
-      }
-      res.status(200).json({ message: "Post fetched!", post: postFinded });
+      if (!postFinded)
+        caseOfPostNotFound("Post not founded! Unable to delete.", 404);
+      await PostsModel.deleteOne({ id: postFinded._id });
+      return res.status(200).json({
+        message: "Post delete success!"
+      });
     } catch (error) {
       next(error);
     }
@@ -106,8 +114,22 @@ export default {
 // ===================== utils =====================
 
 const clearImageFileFromSystem = imagePath => {
-  // deleta arquivos de imagens antigos quando estes forem atualizados.
+  // deleta arquivos de imagens antigos quando estes forem atualizados na edicao do post.
   fs.unlink(path.join(__dirname, "..", imagePath), error => {
     if (error) console.log(error);
   });
+};
+
+const caseOfPostNotFound = (message, statusCode) => {
+  let error = {};
+  if (typeof message !== "string" || typeof statusCode !== "number") {
+    error = new Error(
+      'Type of message or type of status code is invalid! Check "caseOfPostNotFound" function on feed.js controller.'
+    );
+    error.statusCode = 500;
+    throw error;
+  }
+  error = new Error(message);
+  error.statusCode = statusCode;
+  throw error;
 };
