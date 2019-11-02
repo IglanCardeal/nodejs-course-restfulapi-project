@@ -4,6 +4,7 @@ import bodyParser from "body-parser";
 import mongoose from "mongoose";
 import multer from "multer";
 import feedRoutes from "./routes/feed";
+import authRoutes from "./routes/auth";
 import crypto from "crypto";
 
 const PORT = process.env.PORT || 8080;
@@ -52,6 +53,7 @@ app.use((req, res, next) => {
   return next();
 });
 
+app.use("/auth", authRoutes);
 app.use("/feed", feedRoutes);
 app.use((error, req, res, next) => {
   // tratamento geral de erros, executa sempre que tiver um next(error).
