@@ -2,6 +2,7 @@ import { validationResult } from "express-validator";
 import path from "path";
 import fs from "fs";
 import PostsModel from "../models/posts";
+import UsersModel from "../models/users";
 
 // ===================== utils =====================
 const clearImageFileFromSystem = imagePath => {
@@ -11,11 +12,11 @@ const clearImageFileFromSystem = imagePath => {
   });
 };
 
-const caseOfPostNotFound = (message, statusCode) => {
+const feedErrorHandler = (message, statusCode) => {
   let error;
   if (typeof message !== "string" || typeof statusCode !== "number") {
     error = new Error(
-      'Server error! Type of message or type of status code is an invalid type! Check "caseOfPostNotFound" function on feed.js controller.'
+      'Server error! Type of message or type of status code is an invalid type! Check "feedErrorHandler" function on feed.js controller.'
     );
     error.statusCode = 500;
     throw error;
@@ -31,8 +32,11 @@ export default {
     try {
       const postId = req.params.postId;
       const postFinded = await PostsModel.findById(postId);
-      if (!postFinded) caseOfPostNotFound("Post not found!", 404);
-      res.status(200).json({ message: "Post fetched!", post: postFinded });
+      if (!postFinded) {
+        feedErrorHandler("Post not found!", 404);
+      }
+      const user = await UsersModel.findById(postFinded.creator);
+      res.status(200).json({ message: "Post fetched!", post: postFinded, username: user.name });
     } catch (error) {
       next(error);
     }
@@ -57,30 +61,30 @@ export default {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        const error = new Error(errors.array()[0].msg);
-        error.statusCode = 422;
-        throw error;
+        feedErrorHandler(errors.array()[0].msg, 422);
       }
       if (!req.file) {
-        const error = new Error("No image provided!");
-        error.statusCode = 422;
-        throw error;
+        feedErrorHandler("No image provided!", 422);
       }
       const { title, content } = req.body;
       const imageUrl = req.file.path;
-      // cria novo post.
       const newPost = new PostsModel({
         title,
         content,
         imageUrl: imageUrl,
-        creator: {
-          name: "Me Myself"
-        }
+        creator: req.userId
       });
+      const user = await UsersModel.findById(req.userId);
+      user.posts.push(newPost);
       await newPost.save();
+      await user.save();
       res.json({
         message: "Post created successfully!",
-        post: newPost
+        post: newPost,
+        creator: {
+          id: user._id,
+          name: user.name
+        }
       });
     } catch (error) {
       next(error);
@@ -91,9 +95,7 @@ export default {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        const error = new Error(errors.array()[0].msg);
-        error.statusCode = 422;
-        throw error;
+        feedErrorHandler(errors.array()[0].msg, 422);
       }
       const postId = req.params.postId;
       const { title, content } = req.body;
@@ -102,18 +104,18 @@ export default {
         imageUrl = req.file.path;
       }
       if (!imageUrl) {
-        const error = new Error("No file picked!");
-        error.statusCode = 422;
-        throw error;
+        feedErrorHandler("No file picked!", 422);
       }
       const postFinded = await PostsModel.findById(postId);
-      if (!postFinded)
-        caseOfPostNotFound("Post not found! Unable to edit post.", 404);
-      // Apos verificada a existencia do post, verificar se o usuario pode edita-lo.
-      // ...
-      // ..
-      if (imageUrl !== postFinded.imageUrl)
+      if (!postFinded) {
+        feedErrorHandler("Post not found! Unable to edit post.", 404);
+      }
+      if (postFinded.creator.toString() !== req.userId) {
+        feedErrorHandler("Not authorized action!", 403);
+      }
+      if (imageUrl !== postFinded.imageUrl) {
         clearImageFileFromSystem(postFinded.imageUrl);
+      }
       postFinded.title = title;
       postFinded.content = content;
       postFinded.imageUrl = imageUrl;
@@ -130,16 +132,54 @@ export default {
     try {
       const postId = req.params.postId;
       const postFinded = await PostsModel.findById(postId);
-      if (!postFinded)
-        caseOfPostNotFound("Post not founded! Unable to delete.", 404);
-      // Apos verificada a existencia do post, verificar se o usuario pode deleta-lo.
-      // ...
-      // ...
+      if (!postFinded) {
+        feedErrorHandler("Post not founded! Unable to delete.", 404);
+      }
+      if (postFinded.creator.toString() !== req.userId) {
+        feedErrorHandler("Not authorized action!", 403);
+      }
+      const user = await UsersModel.findById(req.userId);
+      if (!user) {
+        feedErrorHandler("User not found!", 404);
+      }
+      user.posts.pull(postFinded._id);
+      await user.save();
       await PostsModel.deleteOne({ _id: postFinded._id });
       clearImageFileFromSystem(postFinded.imageUrl);
       return res.status(200).json({
         message: "Post delete success!"
       });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getStatus: async (req, res, next) => {
+    try {
+      const user = await UsersModel.findById(req.userId);
+      if (!user) {
+        feedErrorHandler("User not found!", 404);
+      }
+      res.status(200).json({ status: user.status });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  updateStatus: async (req, res, next) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        feedErrorHandler(errors.array()[0].msg, 401);
+      }
+      const user = await UsersModel.findById(req.userId);
+      if (!user) {
+        feedErrorHandler("User not found!", 404);
+      }
+      const newUserStatus = req.body.status;
+      user.status = newUserStatus;
+      await user.save();
+      res.status(201).json({ message: "Status updated successfully!" });
     } catch (error) {
       next(error);
     }

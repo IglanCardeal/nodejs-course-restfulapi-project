@@ -17,11 +17,12 @@ const Posts = new Schema(
       required: true
     },
     creator: {
-      type: Object,
-      required: true
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      require: true
     }
   },
   { timestamps: true } // If set timestamps, mongoose assigns createdAt and updatedAt fields to your schema, the type assigned is Date.
-); 
+);
 
-export default mongoose.model("Posts", Posts);
+export default mongoose.model("Post", Posts);

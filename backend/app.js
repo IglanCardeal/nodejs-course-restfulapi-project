@@ -57,7 +57,7 @@ app.use("/auth", authRoutes);
 app.use("/feed", feedRoutes);
 app.use((error, req, res, next) => {
   // tratamento geral de erros, executa sempre que tiver um next(error).
-  console.log(error);
+  // console.log(error);
   const status = error.statusCode || 500;
   const message = error.statusCode
     ? error.message
@@ -69,7 +69,7 @@ const mongoPort = 27017;
 const database = "my-api";
 const mongoUrl = `mongodb://localhost:${mongoPort}/${database}`;
 
-mongoose.connect(mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true }, error => {
+mongoose.connect(mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true }, error => {
   if (error) {
     console.log(error);
     process.exit(1);

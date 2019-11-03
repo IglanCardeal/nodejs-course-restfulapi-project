@@ -1,7 +1,7 @@
 import express from "express";
 import { body } from "express-validator";
-
 import feedController from "../controllers/feed";
+import checkAuth from "../middleware/check-auth";
 
 const router = express.Router();
 
@@ -14,10 +14,29 @@ const postPostValidator = () => [
     .isLength({ min: 5 })
 ];
 
-router.get("/posts", feedController.getPosts);
-router.get("/post/:postId", feedController.getPost);
-router.post("/post", postPostValidator(), feedController.createPost);
-router.put("/post/:postId", postPostValidator(), feedController.editPost);
-router.delete("/post/:postId", feedController.deletePost);
+router.get("/posts", checkAuth, feedController.getPosts);
+router.get("/post/:postId", checkAuth, feedController.getPost);
+router.post("/post", checkAuth, postPostValidator(), feedController.createPost);
+router.put(
+  "/post/:postId",
+  checkAuth,
+  postPostValidator(),
+  feedController.editPost
+);
+router.delete("/post/:postId", checkAuth, feedController.deletePost);
+
+router.get("/status", checkAuth, feedController.getStatus);
+router.put(
+  "/status",
+  checkAuth,
+  [
+    body("status")
+      .trim()
+      .not()
+      .isEmpty()
+      .withMessage("Write something to update your status!")
+  ],
+  feedController.updateStatus
+);
 
 export default router;
