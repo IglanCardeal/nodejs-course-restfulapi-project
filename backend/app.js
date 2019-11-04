@@ -6,8 +6,10 @@ import multer from "multer";
 import feedRoutes from "./routes/feed";
 import authRoutes from "./routes/auth";
 import crypto from "crypto";
+import dotenv from "dotenv";
 
-const PORT = process.env.PORT || 8080;
+dotenv.config();
+const PORT = process.env.APP_SERVER_PORT || 8080;
 const app = express();
 
 const fileStorage = multer.diskStorage({
@@ -65,17 +67,30 @@ app.use((error, req, res, next) => {
   res.status(status).json({ message });
 });
 
-const mongoPort = 27017;
-const database = "my-api";
+const mongoPort = process.env.DATABASE_PORT;
+const database = process.env.DATABASE_NAME;
 const mongoUrl = `mongodb://localhost:${mongoPort}/${database}`;
 
-mongoose.connect(mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true }, error => {
-  if (error) {
-    console.log(error);
-    process.exit(1);
+mongoose.connect(
+  mongoUrl,
+  { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true },
+  error => {
+    if (error) {
+      console.log(
+        "Unable to connect MongoDB! Application will not execute due connection failed.",
+        error
+      );
+      process.exit(1);
+    }
+    if (process.env.NODE_ENV !== "DEVELOPMENT") {
+      console.log(
+        "Definir ambiente NODE_ENV como 'DEVELOPMENT' no aqruivo .env"
+      );
+      process.exit(1);
+    }
+    app.listen(PORT, () => {
+      console.log(`MongoDB connection successful!\nURL = ${mongoUrl}\n`);
+      console.log(`API Server running on port: ${PORT}`);
+    });
   }
-  app.listen(PORT, () => {
-    console.log(`MongoDB connection successful!\nURL = ${mongoUrl}\n`);
-    console.log(`API Server running on port: ${PORT}`);
-  });
-});
+);
