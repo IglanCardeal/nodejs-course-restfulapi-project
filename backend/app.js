@@ -2,6 +2,7 @@ import express from "express";
 import bodyParser from "body-parser";
 import path from "path";
 import dotenv from "dotenv";
+import helmet from "helmet";
 
 import feedRoutes from "./routes/feed";
 import authRoutes from "./routes/auth";
@@ -19,7 +20,7 @@ const app = express();
 app.use(bodyParser.json());
 app.use(multerFileStorage);
 app.use("/images", express.static(path.join(__dirname, "images")));
-
+app.use(helmet());
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*"); // permite request de todas as origens.
   res.setHeader(

@@ -36,7 +36,11 @@ export default {
         feedErrorHandler("Post not found!", 404);
       }
       const user = await UsersModel.findById(postFinded.creator);
-      res.status(200).json({ message: "Post fetched!", post: postFinded, username: user.name });
+      res.status(200).json({
+        message: "Post fetched!",
+        post: postFinded,
+        username: user.name
+      });
     } catch (error) {
       next(error);
     }
@@ -110,7 +114,10 @@ export default {
       if (!postFinded) {
         feedErrorHandler("Post not found! Unable to edit post.", 404);
       }
-      if (postFinded.creator.toString() !== req.userId) {
+      const postDoNotBelongsToUser = Boolean(
+        postFinded.creator.toString() !== req.userId
+      );
+      if (postDoNotBelongsToUser) {
         feedErrorHandler("Not authorized action!", 403);
       }
       if (imageUrl !== postFinded.imageUrl) {
@@ -135,7 +142,10 @@ export default {
       if (!postFinded) {
         feedErrorHandler("Post not founded! Unable to delete.", 404);
       }
-      if (postFinded.creator.toString() !== req.userId) {
+      const postDoNotBelongsToUser = Boolean(
+        postFinded.creator.toString() !== req.userId
+      );
+      if (postDoNotBelongsToUser) {
         feedErrorHandler("Not authorized action!", 403);
       }
       const user = await UsersModel.findById(req.userId);
