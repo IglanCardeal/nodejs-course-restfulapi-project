@@ -3,38 +3,23 @@ import { validationResult } from "express-validator";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import authErrorHandler from "../utils/auth-error-handler";
 
 dotenv.config();
 
 const PRIVATE_KEY = process.env.API_PRIVATE_KEY;
-
-// ===================== utils =====================
-const authErrorHandler = (message, statusCode) => {
-  let error;
-  if (typeof message !== "string" || typeof statusCode !== "number") {
-    error = new Error(
-      'Server error! Type of message or type of status code is an invalid type! Check "authErrorController" function on auth.js controller.'
-    );
-    error.statusCode = 500;
-    throw error;
-  }
-  error = new Error(message);
-  error.statusCode = statusCode;
-  throw error;
-};
-// =================================================
 
 export default {
   signup: async (req, res, next) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        authErrorHandler(errors.array()[0].msg, 422)
+        authErrorHandler(errors.array()[0].msg, 422);
       }
       const { email, name, password } = req.body;
       const emailAlreadyExists = await UsersModel.findOne({ email: email });
       if (emailAlreadyExists) {
-        authErrorHandler("Email already exists! Try another one.", 422)
+        authErrorHandler("Email already exists! Try another one.", 422);
       }
       const strength = 12;
       const hashedPassword = await bcrypt.hash(password, strength);
@@ -57,19 +42,19 @@ export default {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        authErrorHandler(errors.array()[0].msg, 422)
+        authErrorHandler(errors.array()[0].msg, 422);
       }
       const { email, password } = req.body;
       const userFinded = await UsersModel.findOne({ email: email });
       if (!userFinded) {
-        authErrorHandler("User not found! Try again.", 404)
+        authErrorHandler("User not found! Try again.", 404);
       }
       const isPasswordCorrect = await bcrypt.compare(
         password,
         userFinded.password
       );
       if (!isPasswordCorrect) {
-        authErrorHandler("Incorrect password! Try again.", 401)
+        authErrorHandler("Incorrect password! Try again.", 401);
       }
       const token = jwt.sign(
         {

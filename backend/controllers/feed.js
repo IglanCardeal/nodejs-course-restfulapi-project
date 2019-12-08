@@ -1,37 +1,17 @@
 import { validationResult } from "express-validator";
-import path from "path";
-import fs from "fs";
+
 import PostsModel from "../models/posts";
 import UsersModel from "../models/users";
+import socket from "../middleware/socket";
 
-// ===================== utils =====================
-const clearImageFileFromSystem = imagePath => {
-  // deleta arquivos de imagens antigos quando estes forem atualizados na edicao do post.
-  fs.unlink(path.join(__dirname, "..", imagePath), error => {
-    if (error) console.log(error);
-  });
-};
-
-const feedErrorHandler = (message, statusCode) => {
-  let error;
-  if (typeof message !== "string" || typeof statusCode !== "number") {
-    error = new Error(
-      'Server error! Type of message or type of status code is an invalid type! Check "feedErrorHandler" function on feed.js controller.'
-    );
-    error.statusCode = 500;
-    throw error;
-  }
-  error = new Error(message);
-  error.statusCode = statusCode;
-  throw error;
-};
-// ===============================================
+import clearImageFileFromSystem from "../utils/remove-imagefile";
+import feedErrorHandler from "../utils/feed-error-handler";
 
 export default {
   getPost: async (req, res, next) => {
     try {
       const postId = req.params.postId;
-      const postFinded = await PostsModel.findById(postId);
+      const postFinded = await PostsModel.findById(postId).exec();
       if (!postFinded) {
         feedErrorHandler("Post not found!", 404);
       }
@@ -49,9 +29,11 @@ export default {
   getPosts: async (req, res, next) => {
     try {
       const currentPage = req.query.page || 1;
-      const perPage = 2; // quantidade de post por pagina.
+      const perPage = 10; // quantidade de post por pagina.
       const totalItems = await PostsModel.find().countDocuments(); // numero total de posts.
       const posts = await PostsModel.find()
+        .sort({ createdAt: -1 })
+        .populate("creator")
         .skip((currentPage - 1) * perPage)
         .limit(perPage);
       // 'totalItems' e tratado no front para exibir os botoes 'prev' e 'next'.
@@ -62,26 +44,35 @@ export default {
   },
 
   createPost: async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      feedErrorHandler(errors.array()[0].msg, 422);
+    }
+    if (!req.file) {
+      feedErrorHandler("No image provided!", 422);
+    }
+    const { title, content } = req.body;
+    const imageUrl = req.file.path;
+    const newPost = new PostsModel({
+      title,
+      content,
+      imageUrl: imageUrl,
+      creator: req.userId
+    });
     try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        feedErrorHandler(errors.array()[0].msg, 422);
-      }
-      if (!req.file) {
-        feedErrorHandler("No image provided!", 422);
-      }
-      const { title, content } = req.body;
-      const imageUrl = req.file.path;
-      const newPost = new PostsModel({
-        title,
-        content,
-        imageUrl: imageUrl,
-        creator: req.userId
-      });
       const user = await UsersModel.findById(req.userId);
       user.posts.push(newPost);
-      await newPost.save();
-      await user.save();
+      Promise.all([newPost.save(), user.save()]);
+      socket.getIO().emit("post", {
+        action: "create",
+        post: {
+          ...newPost._doc,
+          creator: {
+            id: user._id,
+            name: user.name
+          }
+        }
+      });
       res.json({
         message: "Post created successfully!",
         post: newPost,
@@ -96,26 +87,26 @@ export default {
   },
 
   editPost: async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      feedErrorHandler(errors.array()[0].msg, 422);
+    }
+    const postId = req.params.postId;
+    const { title, content } = req.body;
+    let imageUrl = req.body.image;
+    if (req.file) {
+      imageUrl = req.file.path;
+    }
+    if (!imageUrl) {
+      feedErrorHandler("No file picked!", 422);
+    }
     try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        feedErrorHandler(errors.array()[0].msg, 422);
-      }
-      const postId = req.params.postId;
-      const { title, content } = req.body;
-      let imageUrl = req.body.image;
-      if (req.file) {
-        imageUrl = req.file.path;
-      }
-      if (!imageUrl) {
-        feedErrorHandler("No file picked!", 422);
-      }
-      const postFinded = await PostsModel.findById(postId);
+      const postFinded = await PostsModel.findById(postId).populate("creator");
       if (!postFinded) {
         feedErrorHandler("Post not found! Unable to edit post.", 404);
       }
       const postDoNotBelongsToUser = Boolean(
-        postFinded.creator.toString() !== req.userId
+        postFinded.creator._id.toString() !== req.userId
       );
       if (postDoNotBelongsToUser) {
         feedErrorHandler("Not authorized action!", 403);
@@ -126,7 +117,11 @@ export default {
       postFinded.title = title;
       postFinded.content = content;
       postFinded.imageUrl = imageUrl;
-      await postFinded.save();
+      const result = await postFinded.save();
+      socket.getIO().emit("post", {
+        action: "update",
+        post: result
+      });
       return res
         .status(200)
         .json({ message: "Post update success!", post: postFinded });
@@ -153,9 +148,14 @@ export default {
         feedErrorHandler("User not found!", 404);
       }
       user.posts.pull(postFinded._id);
-      await user.save();
-      await PostsModel.deleteOne({ _id: postFinded._id });
+      // await user.save();
+      // await PostsModel.deleteOne({ _id: postFinded._id });
+      Promise.all([user.save(), PostsModel.deleteOne({ _id: postFinded._id })]);
       clearImageFileFromSystem(postFinded.imageUrl);
+      socket.getIO().emit("post", {
+        action: "delete",
+        _id: postFinded._id
+      });
       return res.status(200).json({
         message: "Post delete success!"
       });
