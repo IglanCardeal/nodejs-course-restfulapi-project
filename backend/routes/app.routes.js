@@ -5,7 +5,7 @@ import authRoutes from "./auth";
 
 const routes = Router();
 
-routes.use(feedRoutes);
-routes.use(authRoutes);
+routes.use("/feed", feedRoutes);
+routes.use("/auth", authRoutes);
 
 module.exports = routes;
