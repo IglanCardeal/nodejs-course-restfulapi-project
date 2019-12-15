@@ -5,8 +5,8 @@
   "main": "app.js",
   "author": "Iglan Cardeal",
   "scripts": {
-    "start": "NODE_ENV=development nodemon --exec babel-node app.js",
-    "production": "NODE_ENV=production babel-node app.js"
+    "start": "NODE_ENV=development nodemon --exec babel-node server.js",
+    "production": "NODE_ENV=production babel-node server.js"
   },
   "license": "MIT",
   "dependencies": {
