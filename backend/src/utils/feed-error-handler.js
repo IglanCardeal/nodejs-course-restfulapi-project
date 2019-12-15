@@ -9,5 +9,6 @@ export default (message, statusCode) => {
   }
   error = new Error(message);
   error.statusCode = statusCode;
+  error.doNotGenerateLog = true;
   throw error;
 };

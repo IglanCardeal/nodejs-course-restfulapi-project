@@ -9,26 +9,39 @@ dotenv.config();
 
 const PRIVATE_KEY = process.env.API_PRIVATE_KEY;
 
+const checkIfErrorsIsEmpty = req => {
+  const errors = validationResult(req);
+
+  const errorsIsNotEmpty = !errors.isEmpty();
+
+  if (errorsIsNotEmpty) {
+    return authErrorHandler(errors.array()[0].msg, 422);
+  }
+};
+
 export default {
   signup: async (req, res, next) => {
+    checkIfErrorsIsEmpty(req);
+
     try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        authErrorHandler(errors.array()[0].msg, 422);
-      }
       const { email, name, password } = req.body;
       const emailAlreadyExists = await UsersModel.findOne({ email: email });
+
       if (emailAlreadyExists) {
         authErrorHandler("Email already exists! Try another one.", 422);
       }
+
       const strength = 12;
       const hashedPassword = await bcrypt.hash(password, strength);
+
       const newUser = new UsersModel({
         email: email,
         name: name,
         password: hashedPassword
       });
+
       await newUser.save();
+
       return res.status(201).json({
         message: "User created successfully!",
         userId: newUser._id
@@ -39,23 +52,26 @@ export default {
   },
 
   login: async (req, res, next) => {
+    checkIfErrorsIsEmpty(req);
+
     try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        authErrorHandler(errors.array()[0].msg, 422);
-      }
       const { email, password } = req.body;
+
       const userFinded = await UsersModel.findOne({ email: email });
+
       if (!userFinded) {
         authErrorHandler("User not found! Try again.", 404);
       }
+
       const isPasswordCorrect = await bcrypt.compare(
         password,
         userFinded.password
       );
+
       if (!isPasswordCorrect) {
         authErrorHandler("Incorrect password! Try again.", 401);
       }
+
       const token = jwt.sign(
         {
           email: userFinded.email,
@@ -66,6 +82,7 @@ export default {
           expiresIn: "1h" // expira em 1 hora
         }
       );
+
       res.status(200).json({ token: token, userId: userFinded._id.toString() });
     } catch (error) {
       next(error);

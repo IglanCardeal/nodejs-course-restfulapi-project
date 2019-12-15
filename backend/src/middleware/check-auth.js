@@ -12,22 +12,33 @@ export default (req, res, next) => {
   */
   try {
     const checkAuthHeader = req.get("Authorization");
+
     if (!checkAuthHeader) {
       const error = new Error("Not authenticated! Make login first.");
       error.statusCode = 401;
+      error.doNotGenerateLog = true;
+
       throw error;
     }
+
     const token = checkAuthHeader.split(" ")[1]; // extrai somente o token.
+
     let decodedToken;
+
     jwt.verify(token, PRIVATE_KEY, (error, decoded) => {
       if (error) {
         const error = new Error("Invalid token! Try to login again.");
         error.statusCode = 401;
+        error.doNotGenerateLog = true;
+
         throw error;
       }
+
       decodedToken = decoded;
     });
+
     req.userId = decodedToken.userId;
+
     next();
   } catch (error) {
     next(error);

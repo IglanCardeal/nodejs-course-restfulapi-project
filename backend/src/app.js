@@ -5,7 +5,7 @@ import helmet from "helmet";
 
 import appRoutes from "./routes/app.routes";
 
-import errorHandler from "./middleware/error-handler";
+import errorHandler from "./middleware/errors-handler";
 import multerFileStorage from "./middleware/multer-filestorage";
 import cors from "./middleware/cors";
 

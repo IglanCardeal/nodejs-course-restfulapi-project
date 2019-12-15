@@ -7,10 +7,21 @@ import socket from "../middleware/socket";
 import clearImageFileFromSystem from "../utils/remove-imagefile";
 import feedErrorHandler from "../utils/feed-error-handler";
 
+const checkIfErrorsIsEmpty = (req, statusCode) => {
+  const errors = validationResult(req);
+
+  const errorsIsNotEmpty = !errors.isEmpty();
+
+  if (errorsIsNotEmpty) {
+    return feedErrorHandler(errors.array()[0].msg, statusCode);
+  }
+};
+
 export default {
   getPost: async (req, res, next) => {
+    const postId = req.params.postId;
+
     try {
-      const postId = req.params.postId;
       const postFinded = await PostsModel.findById(postId).exec();
 
       if (!postFinded) {
@@ -30,10 +41,10 @@ export default {
   },
 
   getPosts: async (req, res, next) => {
-    try {
-      const currentPage = req.query.page || 1;
-      const perPage = 10; // quantidade de post por pagina.
+    const currentPage = req.query.page || 1;
+    const perPage = 10; // quantidade de post por pagina.
 
+    try {
       const totalItems = await PostsModel.find().countDocuments(); // numero total de posts.
 
       const posts = await PostsModel.find()
@@ -50,11 +61,7 @@ export default {
   },
 
   createPost: async (req, res, next) => {
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-      feedErrorHandler(errors.array()[0].msg, 422);
-    }
+    checkIfErrorsIsEmpty(req, 422);
 
     if (!req.file) {
       feedErrorHandler("No image provided!", 422);
@@ -101,11 +108,8 @@ export default {
   },
 
   editPost: async (req, res, next) => {
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-      feedErrorHandler(errors.array()[0].msg, 422);
-    }
+    // statusCode 422
+    checkIfErrorsIsEmpty(req, 422);
 
     const postId = req.params.postId;
     const { title, content } = req.body;
@@ -214,13 +218,9 @@ export default {
   },
 
   updateStatus: async (req, res, next) => {
+    checkIfErrorsIsEmpty(req, 401);
+
     try {
-      const errors = validationResult(req);
-
-      if (!errors.isEmpty()) {
-        feedErrorHandler(errors.array()[0].msg, 401);
-      }
-
       const user = await UsersModel.findById(req.userId);
 
       if (!user) {
