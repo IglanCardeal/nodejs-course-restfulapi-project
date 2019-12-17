@@ -91,7 +91,7 @@ class App extends Component {
         localStorage.setItem('userId', resData.userId);
         const remainingMilliseconds = 60 * 60 * 1000;
         const expiryDate = new Date(
-          new Date().getTime() + remainingMilliseconds,
+          new Date().getTime() + remainingMilliseconds
         );
         localStorage.setItem('expiryDate', expiryDate.toISOString());
         this.setAutoLogout(remainingMilliseconds);
@@ -123,7 +123,7 @@ class App extends Component {
       .then((res) => {
         if (res.status === 422) {
           throw new Error(
-            "Validation failed. Make sure the email address isn't used yet!",
+            "Validation failed. Make sure the email address isn't used yet!"
           );
         }
         if (res.status !== 200 && res.status !== 201) {
@@ -161,9 +161,9 @@ class App extends Component {
     let routes = (
       <Switch>
         <Route
-          path="/"
+          path='/'
           exact
-          render={props => (
+          render={(props) => (
             <LoginPage
               {...props}
               onLogin={this.loginHandler}
@@ -172,9 +172,9 @@ class App extends Component {
           )}
         />
         <Route
-          path="/signup"
+          path='/signup'
           exact
-          render={props => (
+          render={(props) => (
             <SignupPage
               {...props}
               onSignup={this.signupHandler}
@@ -182,22 +182,22 @@ class App extends Component {
             />
           )}
         />
-        <Redirect to="/" />
+        <Redirect to='/' />
       </Switch>
     );
     if (this.state.isAuth) {
       routes = (
         <Switch>
           <Route
-            path="/"
+            path='/'
             exact
             render={() => (
               <FeedPage userId={this.state.userId} token={this.state.token} />
             )}
           />
           <Route
-            path="/:postId"
-            render={props => (
+            path='/:postId'
+            render={(props) => (
               <SinglePostPage
                 {...props}
                 userId={this.state.userId}
@@ -205,7 +205,7 @@ class App extends Component {
               />
             )}
           />
-          <Redirect to="/" />
+          <Redirect to='/' />
         </Switch>
       );
     }
@@ -216,7 +216,7 @@ class App extends Component {
         )}
         <ErrorHandler error={this.state.error} onHandle={this.errorHandler} />
         <Layout
-          header={(
+          header={
             <Toolbar>
               <MainNavigation
                 onOpenMobileNav={this.mobileNavHandler.bind(this, true)}
@@ -224,8 +224,8 @@ class App extends Component {
                 isAuth={this.state.isAuth}
               />
             </Toolbar>
-          )}
-          mobileNav={(
+          }
+          mobileNav={
             <MobileNavigation
               open={this.state.showMobileNav}
               mobile
@@ -233,7 +233,7 @@ class App extends Component {
               onLogout={this.logoutHandler}
               isAuth={this.state.isAuth}
             />
-          )}
+          }
         />
         {routes}
       </Fragment>

@@ -14,7 +14,7 @@
       }
     ],
     "max-len": ["error", { "code": 120 }],
-    "semi": "error",
+    "semi": "warn",
     "no-console": "off",
     "global-require": "off",
     "import/prefer-default-export": "off",

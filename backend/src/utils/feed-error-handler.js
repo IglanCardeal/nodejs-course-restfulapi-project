@@ -3,7 +3,8 @@ export default (message, statusCode) => {
 
   if (typeof message !== 'string' || typeof statusCode !== 'number') {
     error = new Error(
-      'Server error! Type of message or type of status code is an invalid type! Check "feedErrorHandler" function on feed.js controller.'
+      `Server error! Type of message or type of status code is an invalid type!\n
+      Check "feedErrorHandler" function on feed.js controller.`,
     );
     error.statusCode = 500;
 

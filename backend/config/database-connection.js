@@ -26,7 +26,7 @@ export default (callback) => {
   const connectionObject = {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    useCreateIndex: true
+    useCreateIndex: true,
   };
 
   try {
