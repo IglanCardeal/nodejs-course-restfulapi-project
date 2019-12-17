@@ -1,5 +1,5 @@
-import winston from "winston";
-import fs from "fs";
+import winston from 'winston';
+import fs from 'fs';
 
 const { format, transports } = winston;
 
@@ -9,22 +9,22 @@ export default (error, filepath) => {
     format: format.combine(format.simple()),
     transports: [
       new transports.Console({
-        format: format.combine(format.colorize({ all: true }), format.simple())
+        format: format.combine(format.colorize({ all: true }), format.simple()),
       }),
       new transports.Stream({
-        stream: fs.createWriteStream(filepath, { flags: "a" })
-      })
-    ]
+        stream: fs.createWriteStream(filepath, { flags: 'a' }),
+      }),
+    ],
   };
 
   const logger = winston.createLogger(logConfiguration);
 
   logger.info(
-    `\n================================= BEGIN =============================================`
+    '\n================================= BEGIN =============================================',
   );
   logger.info(`Date: ${new Date()}`);
-  logger.error("message: ", error, "\n");
+  logger.error('message: ', error, '\n');
   logger.info(
-    `\n================================== END ==============================================\n`
+    '\n================================== END ==============================================\n',
   );
 };

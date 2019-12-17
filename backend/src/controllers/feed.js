@@ -1,11 +1,12 @@
-import { validationResult } from "express-validator";
+/* eslint-disable no-underscore-dangle */
+import { validationResult } from 'express-validator';
 
-import PostsModel from "../models/posts";
-import UsersModel from "../models/users";
-import socket from "../middleware/socket";
+import PostsModel from '../models/posts';
+import UsersModel from '../models/users';
+import socket from '../middleware/socket';
 
-import clearImageFileFromSystem from "../utils/remove-imagefile";
-import feedErrorHandler from "../utils/feed-error-handler";
+import clearImageFileFromSystem from '../utils/remove-imagefile';
+import feedErrorHandler from '../utils/feed-error-handler';
 
 const checkIfErrorsIsEmpty = (req, statusCode) => {
   const errors = validationResult(req);
@@ -13,27 +14,27 @@ const checkIfErrorsIsEmpty = (req, statusCode) => {
   const errorsIsNotEmpty = !errors.isEmpty();
 
   if (errorsIsNotEmpty) {
-    return feedErrorHandler(errors.array()[0].msg, statusCode);
+    feedErrorHandler(errors.array()[0].msg, statusCode);
   }
 };
 
 export default {
   getPost: async (req, res, next) => {
-    const postId = req.params.postId;
+    const { postId } = req.params;
 
     try {
       const postFinded = await PostsModel.findById(postId).exec();
 
       if (!postFinded) {
-        feedErrorHandler("Post not found!", 404);
+        feedErrorHandler('Post not found!', 404);
       }
 
       const user = await UsersModel.findById(postFinded.creator);
 
       res.status(200).json({
-        message: "Post fetched!",
+        message: 'Post fetched!',
         post: postFinded,
-        username: user.name
+        username: user.name,
       });
     } catch (error) {
       next(error);
@@ -49,12 +50,12 @@ export default {
 
       const posts = await PostsModel.find()
         .sort({ createdAt: -1 })
-        .populate("creator")
+        .populate('creator')
         .skip((currentPage - 1) * perPage)
         .limit(perPage);
 
       // 'totalItems' e tratado no front para exibir os botoes 'prev' e 'next'.
-      res.status(200).json({ message: "Fetched posts.", posts, totalItems });
+      res.status(200).json({ message: 'Fetched posts.', posts, totalItems });
     } catch (error) {
       next(error);
     }
@@ -64,7 +65,7 @@ export default {
     checkIfErrorsIsEmpty(req, 422);
 
     if (!req.file) {
-      feedErrorHandler("No image provided!", 422);
+      feedErrorHandler('No image provided!', 422);
     }
 
     const { title, content } = req.body;
@@ -73,8 +74,8 @@ export default {
     const newPost = new PostsModel({
       title,
       content,
-      imageUrl: imageUrl,
-      creator: req.userId
+      imageUrl,
+      creator: req.userId,
     });
 
     try {
@@ -83,24 +84,24 @@ export default {
 
       Promise.all([newPost.save(), user.save()]);
 
-      socket.getIO().emit("post", {
-        action: "create",
+      socket.getIO().emit('post', {
+        action: 'create',
         post: {
           ...newPost._doc,
           creator: {
             id: user._id,
-            name: user.name
-          }
-        }
+            name: user.name,
+          },
+        },
       });
 
       res.json({
-        message: "Post created successfully!",
+        message: 'Post created successfully!',
         post: newPost,
         creator: {
           id: user._id,
-          name: user.name
-        }
+          name: user.name,
+        },
       });
     } catch (error) {
       next(error);
@@ -111,7 +112,7 @@ export default {
     // statusCode 422
     checkIfErrorsIsEmpty(req, 422);
 
-    const postId = req.params.postId;
+    const { postId } = req.params;
     const { title, content } = req.body;
     let imageUrl = req.body.image;
 
@@ -120,22 +121,22 @@ export default {
     }
 
     if (!imageUrl) {
-      feedErrorHandler("No file picked!", 422);
+      feedErrorHandler('No file picked!', 422);
     }
 
     try {
-      const postFinded = await PostsModel.findById(postId).populate("creator");
+      const postFinded = await PostsModel.findById(postId).populate('creator');
 
       if (!postFinded) {
-        feedErrorHandler("Post not found! Unable to edit post.", 404);
+        feedErrorHandler('Post not found! Unable to edit post.', 404);
       }
 
       const postDoNotBelongsToUser = Boolean(
-        postFinded.creator._id.toString() !== req.userId
+        postFinded.creator._id.toString() !== req.userId,
       );
 
       if (postDoNotBelongsToUser) {
-        feedErrorHandler("Not authorized action!", 403);
+        feedErrorHandler('Not authorized action!', 403);
       }
 
       if (imageUrl !== postFinded.imageUrl) {
@@ -147,41 +148,41 @@ export default {
       postFinded.imageUrl = imageUrl;
 
       const result = await postFinded.save();
-      socket.getIO().emit("post", {
-        action: "update",
-        post: result
+      socket.getIO().emit('post', {
+        action: 'update',
+        post: result,
       });
 
-      return res
+      res
         .status(200)
-        .json({ message: "Post update success!", post: postFinded });
+        .json({ message: 'Post update success!', post: postFinded });
     } catch (error) {
       next(error);
     }
   },
 
   deletePost: async (req, res, next) => {
-    const postId = req.params.postId;
+    const { postId } = req.params;
 
     try {
       const postFinded = await PostsModel.findById(postId);
 
       if (!postFinded) {
-        feedErrorHandler("Post not founded! Unable to delete.", 404);
+        feedErrorHandler('Post not founded! Unable to delete.', 404);
       }
 
       const postDoNotBelongsToUser = Boolean(
-        postFinded.creator.toString() !== req.userId
+        postFinded.creator.toString() !== req.userId,
       );
 
       if (postDoNotBelongsToUser) {
-        feedErrorHandler("Not authorized action!", 403);
+        feedErrorHandler('Not authorized action!', 403);
       }
 
       const user = await UsersModel.findById(req.userId);
 
       if (!user) {
-        feedErrorHandler("User not found!", 404);
+        feedErrorHandler('User not found!', 404);
       }
 
       user.posts.pull(postFinded._id);
@@ -190,13 +191,13 @@ export default {
 
       clearImageFileFromSystem(postFinded.imageUrl);
 
-      socket.getIO().emit("post", {
-        action: "delete",
-        _id: postFinded._id
+      socket.getIO().emit('post', {
+        action: 'delete',
+        _id: postFinded._id,
       });
 
-      return res.status(200).json({
-        message: "Post delete success!"
+      res.status(200).json({
+        message: 'Post delete success!',
       });
     } catch (error) {
       next(error);
@@ -208,7 +209,7 @@ export default {
       const user = await UsersModel.findById(req.userId);
 
       if (!user) {
-        feedErrorHandler("User not found!", 404);
+        feedErrorHandler('User not found!', 404);
       }
 
       res.status(200).json({ status: user.status });
@@ -224,7 +225,7 @@ export default {
       const user = await UsersModel.findById(req.userId);
 
       if (!user) {
-        feedErrorHandler("User not found!", 404);
+        feedErrorHandler('User not found!', 404);
       }
 
       const newUserStatus = req.body.status;
@@ -232,9 +233,9 @@ export default {
 
       await user.save();
 
-      res.status(201).json({ message: "Status updated successfully!" });
+      res.status(201).json({ message: 'Status updated successfully!' });
     } catch (error) {
       next(error);
     }
-  }
+  },
 };

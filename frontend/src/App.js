@@ -1,17 +1,18 @@
-import React, { Component, Fragment } from "react";
-import { Route, Switch, Redirect, withRouter } from "react-router-dom";
+/* eslint-disable react/destructuring-assignment */
+import React, { Component, Fragment } from 'react';
+import { Route, Switch, Redirect, withRouter } from 'react-router-dom';
 
-import Layout from "./components/Layout/Layout";
-import Backdrop from "./components/Backdrop/Backdrop";
-import Toolbar from "./components/Toolbar/Toolbar";
-import MainNavigation from "./components/Navigation/MainNavigation/MainNavigation";
-import MobileNavigation from "./components/Navigation/MobileNavigation/MobileNavigation";
-import ErrorHandler from "./components/ErrorHandler/ErrorHandler";
-import FeedPage from "./pages/Feed/Feed";
-import SinglePostPage from "./pages/Feed/SinglePost/SinglePost";
-import LoginPage from "./pages/Auth/Login";
-import SignupPage from "./pages/Auth/Signup";
-import "./App.css";
+import Layout from './components/Layout/Layout';
+import Backdrop from './components/Backdrop/Backdrop';
+import Toolbar from './components/Toolbar/Toolbar';
+import MainNavigation from './components/Navigation/MainNavigation/MainNavigation';
+import MobileNavigation from './components/Navigation/MobileNavigation/MobileNavigation';
+import ErrorHandler from './components/ErrorHandler/ErrorHandler';
+import FeedPage from './pages/Feed/Feed';
+import SinglePostPage from './pages/Feed/SinglePost/SinglePost';
+import LoginPage from './pages/Auth/Login';
+import SignupPage from './pages/Auth/Signup';
+import './App.css';
 
 class App extends Component {
   state = {
@@ -21,12 +22,12 @@ class App extends Component {
     token: null,
     userId: null,
     authLoading: false,
-    error: null
+    error: null,
   };
 
   componentDidMount() {
-    const token = localStorage.getItem("token");
-    const expiryDate = localStorage.getItem("expiryDate");
+    const token = localStorage.getItem('token');
+    const expiryDate = localStorage.getItem('expiryDate');
     if (!token || !expiryDate) {
       return;
     }
@@ -34,14 +35,14 @@ class App extends Component {
       this.logoutHandler();
       return;
     }
-    const userId = localStorage.getItem("userId");
+    const userId = localStorage.getItem('userId');
     const remainingMilliseconds =
       new Date(expiryDate).getTime() - new Date().getTime();
-    this.setState({ isAuth: true, token: token, userId: userId });
+    this.setState({ isAuth: true, token, userId });
     this.setAutoLogout(remainingMilliseconds);
   }
 
-  mobileNavHandler = isOpen => {
+  mobileNavHandler = (isOpen) => {
     this.setState({ showMobileNav: isOpen, showBackdrop: isOpen });
   };
 
@@ -51,56 +52,56 @@ class App extends Component {
 
   logoutHandler = () => {
     this.setState({ isAuth: false, token: null });
-    localStorage.removeItem("token");
-    localStorage.removeItem("expiryDate");
-    localStorage.removeItem("userId");
+    localStorage.removeItem('token');
+    localStorage.removeItem('expiryDate');
+    localStorage.removeItem('userId');
   };
 
   loginHandler = (event, authData) => {
     event.preventDefault();
     this.setState({ authLoading: true });
-    fetch("http://localhost:8080/auth/login", {
+    fetch('http://localhost:8080/auth/login', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         email: authData.email,
-        password: authData.password
-      })
+        password: authData.password,
+      }),
     })
-      .then(res => {
+      .then((res) => {
         if (res.status === 422) {
-          throw new Error("Validation failed.");
+          throw new Error('Validation failed.');
         }
         if (res.status !== 200 && res.status !== 201) {
-          console.log("Error!");
-          throw new Error("Could not authenticate you!");
+          console.log('Error!');
+          throw new Error('Could not authenticate you!');
         }
         return res.json();
       })
-      .then(resData => {
+      .then((resData) => {
         this.setState({
           isAuth: true,
           token: resData.token,
           authLoading: false,
-          userId: resData.userId
+          userId: resData.userId,
         });
-        localStorage.setItem("token", resData.token);
-        localStorage.setItem("userId", resData.userId);
+        localStorage.setItem('token', resData.token);
+        localStorage.setItem('userId', resData.userId);
         const remainingMilliseconds = 60 * 60 * 1000;
         const expiryDate = new Date(
-          new Date().getTime() + remainingMilliseconds
+          new Date().getTime() + remainingMilliseconds,
         );
-        localStorage.setItem("expiryDate", expiryDate.toISOString());
+        localStorage.setItem('expiryDate', expiryDate.toISOString());
         this.setAutoLogout(remainingMilliseconds);
       })
-      .catch(err => {
+      .catch((err) => {
         console.log(err);
         this.setState({
           isAuth: false,
           authLoading: false,
-          error: err
+          error: err,
         });
       });
   };
@@ -108,45 +109,45 @@ class App extends Component {
   signupHandler = (event, authData) => {
     event.preventDefault();
     this.setState({ authLoading: true });
-    fetch("http://localhost:8080/auth/signup", {
-      method: "PUT",
+    fetch('http://localhost:8080/auth/signup', {
+      method: 'PUT',
       headers: {
-        "Content-Type": "application/json"
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         email: authData.signupForm.email.value,
         name: authData.signupForm.name.value,
-        password: authData.signupForm.password.value
-      })
+        password: authData.signupForm.password.value,
+      }),
     })
-      .then(res => {
+      .then((res) => {
         if (res.status === 422) {
           throw new Error(
-            "Validation failed. Make sure the email address isn't used yet!"
+            "Validation failed. Make sure the email address isn't used yet!",
           );
         }
         if (res.status !== 200 && res.status !== 201) {
-          console.log("Error!");
-          throw new Error("Creating a user failed!");
+          console.log('Error!');
+          throw new Error('Creating a user failed!');
         }
         return res.json();
       })
-      .then(resData => {
+      .then((resData) => {
         console.log(resData);
         this.setState({ isAuth: false, authLoading: false });
-        this.props.history.replace("/");
+        this.props.history.replace('/');
       })
-      .catch(err => {
+      .catch((err) => {
         console.log(err);
         this.setState({
           isAuth: false,
           authLoading: false,
-          error: err
+          error: err,
         });
       });
   };
 
-  setAutoLogout = milliseconds => {
+  setAutoLogout = (milliseconds) => {
     setTimeout(() => {
       this.logoutHandler();
     }, milliseconds);
@@ -190,7 +191,7 @@ class App extends Component {
           <Route
             path="/"
             exact
-            render={props => (
+            render={() => (
               <FeedPage userId={this.state.userId} token={this.state.token} />
             )}
           />
@@ -215,7 +216,7 @@ class App extends Component {
         )}
         <ErrorHandler error={this.state.error} onHandle={this.errorHandler} />
         <Layout
-          header={
+          header={(
             <Toolbar>
               <MainNavigation
                 onOpenMobileNav={this.mobileNavHandler.bind(this, true)}
@@ -223,8 +224,8 @@ class App extends Component {
                 isAuth={this.state.isAuth}
               />
             </Toolbar>
-          }
-          mobileNav={
+          )}
+          mobileNav={(
             <MobileNavigation
               open={this.state.showMobileNav}
               mobile
@@ -232,7 +233,7 @@ class App extends Component {
               onLogout={this.logoutHandler}
               isAuth={this.state.isAuth}
             />
-          }
+          )}
         />
         {routes}
       </Fragment>

@@ -1,5 +1,5 @@
-import jwt from "jsonwebtoken";
-import dotenv from "dotenv";
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
 
 dotenv.config();
 
@@ -11,27 +11,27 @@ export default (req, res, next) => {
     'Bearer [chave do token]'
   */
   try {
-    const checkAuthHeader = req.get("Authorization");
+    const checkAuthHeader = req.get('Authorization');
 
     if (!checkAuthHeader) {
-      const error = new Error("Not authenticated! Make login first.");
+      const error = new Error('Not authenticated! Make login first.');
       error.statusCode = 401;
       error.doNotGenerateLog = true;
 
       throw error;
     }
 
-    const token = checkAuthHeader.split(" ")[1]; // extrai somente o token.
+    const token = checkAuthHeader.split(' ')[1]; // extrai somente o token.
 
     let decodedToken;
 
     jwt.verify(token, PRIVATE_KEY, (error, decoded) => {
       if (error) {
-        const error = new Error("Invalid token! Try to login again.");
-        error.statusCode = 401;
-        error.doNotGenerateLog = true;
+        const err = new Error('Invalid token! Try to login again.');
+        err.statusCode = 401;
+        err.doNotGenerateLog = true;
 
-        throw error;
+        throw err;
       }
 
       decodedToken = decoded;

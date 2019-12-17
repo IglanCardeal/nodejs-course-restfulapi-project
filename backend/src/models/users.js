@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const { Schema } = mongoose;
 
@@ -7,29 +7,34 @@ const User = new Schema(
     email: {
       type: String,
       required: true,
-      unique: true
+      unique: true,
     },
+
     password: {
       type: String,
-      required: true
+      required: true,
     },
+
     name: {
       type: String,
-      required: true
+      required: true,
     },
+
     status: {
       type: String,
-      default: 'I am a new user!'
+      default: 'I am a new user!',
     },
+
     posts: [
       {
         // Array de id's que referencia a documentos na collection 'Posts'.
-        type: Schema.Types.ObjectId, 
-        ref: "Post"
-      }
-    ]
+        type: Schema.Types.ObjectId,
+        ref: 'Post',
+      },
+    ],
   },
-  { timestamp: true }
+
+  { timestamp: true },
 );
 
-export default mongoose.model("User", User);
+export default mongoose.model('User', User);

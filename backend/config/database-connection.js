@@ -1,17 +1,17 @@
-import mongoose from "mongoose";
-import dotenv from "dotenv";
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
 
 dotenv.config();
 
 const MONGO_DB_PORT = process.env.DATABASE_PORT;
-const DATABASE_NAME = process.env.DATABASE_NAME;
+const { DATABASE_NAME } = process.env;
 const MONGO_DB_URL = `mongodb://localhost:${MONGO_DB_PORT}/${DATABASE_NAME}`;
 
-export default callback => {
-  const connectionCallback = error => {
+export default (callback) => {
+  const connectionCallback = (error) => {
     if (error) {
       throw new Error(
-        "Unable to connect MongoDB! Application will not execute due connection failed."
+        'Unable to connect MongoDB! Application will not execute due connection failed.'
       );
     }
     console.log(`
