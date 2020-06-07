@@ -4,8 +4,8 @@
     "browser": true,
     "jest": true
   },
-  "plugins": ["react", "jsx-a11y", "import"],
-  "extends": ["airbnb"],
+  "extends": ["airbnb", "prettier", "plugin:security/recommended"],
+  "plugins": ["prettier", "promise", "security"],
   "rules": {
     "react/jsx-filename-extension": [
       "error",
@@ -14,10 +14,27 @@
       }
     ],
     "max-len": ["error", { "code": 120 }],
-    "semi": "warn",
-    "no-console": "off",
     "global-require": "off",
     "import/prefer-default-export": "off",
-    "no-unused-expressions": ["error", { "allowTaggedTemplates": true }]
+    "no-unused-expressions": ["error", { "allowTaggedTemplates": true }],
+    "prettier/prettier": "error",
+    "no-unused-vars": "warn",
+    "func-names": "off",
+    "no-process-exit": "off",
+    "object-shorthand": "off",
+    "class-methods-use-this": "off",
+    "jsx-quotes": ["error", "prefer-single"],
+    "promise/always-return": "error",
+    "promise/no-return-wrap": "error",
+    "promise/param-names": "error",
+    "promise/catch-or-return": "error",
+    "promise/no-native": "off",
+    "promise/no-nesting": "warn",
+    "promise/no-promise-in-callback": "warn",
+    "promise/no-callback-in-promise": "warn",
+    "promise/avoid-new": "warn",
+    "promise/no-new-statics": "error",
+    "promise/no-return-in-finally": "warn",
+    "promise/valid-params": "warn"
   }
 }

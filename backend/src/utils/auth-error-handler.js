@@ -1,4 +1,4 @@
-module.exports = (message, statusCode) => {
+export default (message, statusCode) => {
   let error;
 
   if (typeof message !== 'string' || typeof statusCode !== 'number') {
